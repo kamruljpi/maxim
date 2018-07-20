@@ -36,6 +36,10 @@ class taskAssignController extends Controller
 
     	$tasksList = DB::select("SELECT * FROM `mxp_task` WHERE `status` = 1");
     	
-    	self::print_me($request->get('task_1'));
+    	$tasksList = mxpTask::where('status', 1);
+    	
+    	self::print_me($tasksList);
+
     }
+
 }
