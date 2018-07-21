@@ -1,5 +1,5 @@
 @extends('layouts.dashboard')
-@section('page_heading',trans('others.mxp_menu_add_new_role'))
+@section('page_heading','Set Task Access')
 @section('section')
 
 <div class="col-sm-12">
@@ -14,8 +14,8 @@
                 </div>
             @endif
 
-            @if(Session::has('new_role_create'))
-                @include('widgets.alert', array('class'=>'success', 'message'=> Session::get('new_role_create') ))
+            @if(Session::has('new_taskrole_create'))
+                @include('widgets.alert', array('class'=>'success', 'message'=> Session::get('new_taskrole_create') ))
             @endif
 
             <form role="form" action="{{ Route('permission_task_assign_action') }}" method="post">
@@ -30,7 +30,13 @@
 							<div class="form-group">
 							    <select class="form-control selections" name="task_{{ $role->id }}[]" multiple="true">
 							    	@foreach($tasksList as $task)
-							        	<option value="{{ $task->id_mxp_task }}">{{ $task->name }}</option>
+							        	<option value="{{ $task->id_mxp_task }}" <?php 
+                                    if(isset($taskRoleData[$role->id]) && !empty($taskRoleData[$role->id])){
+                                        if(in_array($task->id_mxp_task, $taskRoleData[$role->id])){
+                                            print 'selected="selected"';
+                                        }
+                                    }
+                                    ?>>{{ $task->name }}</option>
 							        @endforeach
 							    </select>
 							</div>
@@ -40,7 +46,7 @@
                 @endforeach
 
                 <div class="form-group">
-                    <input class="form-control btn btn-primary btn-outline" type="submit" value="{{ trans('others.save_button') }}" >
+                    <input class="task_role_btn form-control btn btn-primary btn-outline" type="submit" value="{{ trans('others.save_button') }}" >
                 </div>
             </form>
         </div>
@@ -50,4 +56,13 @@
 <script type="text/javascript">
     $(".selections").select2();
 </script>
+<style type="text/css">
+    .task_role_btn{
+        margin-top: 15px;
+        margin-bottom: 80px;
+    }
+    .task_role_btn.btn-primary.btn-outline{
+        color:#fff;
+    }
+</style>
 @stop
