@@ -79,47 +79,49 @@ class BookingController extends Controller
         $InserBuyerDetails->mobile_invoice        = $buyers->mobile_invoice;
         $InserBuyerDetails->telephone_invoice     = $buyers->telephone_invoice;
         $InserBuyerDetails->fax_invoice           = $buyers->fax_invoice;
-       $InserBuyerDetails->address_part1_delivery = $buyers->address_part1_delivery;
-       $InserBuyerDetails->address_part2_delivery = $buyers->address_part2_delivery;
+        $InserBuyerDetails->address_part1_delivery = $buyers->address_part1_delivery;
+        $InserBuyerDetails->address_part2_delivery = $buyers->address_part2_delivery;
         $InserBuyerDetails->attention_delivery    = $buyers->attention_delivery;
         $InserBuyerDetails->mobile_delivery       = $buyers->mobile_delivery;
         $InserBuyerDetails->telephone_delivery    = $buyers->telephone_delivery;
         $InserBuyerDetails->fax_delivery          = $buyers->fax_delivery;
+        $InserBuyerDetails->booking_status        = 'Booked';
+        $InserBuyerDetails->is_complete           = 0;
         $InserBuyerDetails->save();
 
       }
 
-   		$data = $request->all();
-      $item_code = $data['item_code'];
-      $sku = $data['sku'];
-      $erp = (isset($data['erp'])) ? $data['erp'] : 0;
-      $item_size = (isset($data['item_size'])) ? $data['item_size'] : 0;
-   		$item_gmts_color = (isset($data['item_gmts_color'])) ? $data['item_gmts_color'] : 0;
-      $others_color = (isset($data['others_color'])) ? $data['others_color'] : 0;
-      $item_description = (isset($data['item_description'])) ? $data['item_description'] : '';
-   		$item_qty = $data['item_qty'];
-      $item_price = $data['item_price'];
+        $data = $request->all();
+        $item_code = $data['item_code'];
+        $sku = $data['sku'];
+        $erp = (isset($data['erp'])) ? $data['erp'] : 0;
+        $item_size = (isset($data['item_size'])) ? $data['item_size'] : 0;
+        $item_gmts_color = (isset($data['item_gmts_color'])) ? $data['item_gmts_color'] : 0;
+        $others_color = (isset($data['others_color'])) ? $data['others_color'] : 0;
+        $item_description = (isset($data['item_description'])) ? $data['item_description'] : '';
+        $item_qty = $data['item_qty'];
+        $item_price = $data['item_price'];
       
       for ($i=0; $i < count($item_code); $i++) {
         $insertBooking = new MxpBooking();
         $insertBooking->user_id           = Auth::user()->user_id;
         $insertBooking->booking_order_id  = $customid ;//'booking-abc-001';
-   			$insertBooking->erp_code          = $erp[$i];
+        $insertBooking->erp_code          = $erp[$i];
         $insertBooking->item_code         = $item_code[$i];
-   			$insertBooking->sku         = $sku[$i];
+        $insertBooking->sku         = $sku[$i];
         $insertBooking->gmts_color        = $item_gmts_color[$i];//(!empty($item_gmts_color[$i]) ? $item_gmts_color[$i] : '');
         $insertBooking->others_color        = (!empty($others_color[$i]) ? $others_color[$i] : 0);
 
         $insertBooking->item_description        = (!empty($item_description[$i]) ? $item_description[$i] : 0);
 
-   			$insertBooking->item_size         = (!empty($item_size[$i]) ? $item_size[$i] : 0);
-   			$insertBooking->item_quantity     = (!empty($item_qty[$i]) ? $item_qty[$i] : 0 );
+        $insertBooking->item_size         = (!empty($item_size[$i]) ? $item_size[$i] : 0);
+        $insertBooking->item_quantity     = (!empty($item_qty[$i]) ? $item_qty[$i] : 0 );
         $insertBooking->item_price        = (!empty($item_price[$i]) ? $item_price[$i] : 0 );
         $insertBooking->orderDate         = $request->orderDate;
         $insertBooking->orderNo           = $request->orderNo;
         $insertBooking->shipmentDate      = $request->shipmentDate;
-   			$insertBooking->poCatNo           = $request->poCatNo;
-        $insertBooking->save();        
+        $insertBooking->poCatNo           = $request->poCatNo;
+        $insertBooking->save();
    		}
 
       $bookingValues = DB::select('SELECT erp_code,item_code,sku,others_color,item_description,item_price,orderDate,orderNo,shipmentDate,poCatNo, GROUP_CONCAT(gmts_color) as gmts_color,GROUP_CONCAT(item_size) as item_size, GROUP_CONCAT(item_quantity) as item_quantity FROM mxp_booking WHERE booking_order_id= "'.$customid.'" GROUP BY item_code');

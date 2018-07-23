@@ -81,6 +81,7 @@
 					<th>booking id</th>
 					<th>Order Date</th>
 					<th>Shipment Date</th>
+					<th>Status</th>
 					<th>Action</th>
 					</thead>
 				</tr>
@@ -95,6 +96,7 @@
 						<td>{{$value->booking_order_id}}</td>
 						<td>{{Carbon\Carbon::parse($value->created_at)}}</td>
 						<td></td>
+						<td>{{$value->booking_status}}</td>
 						<td>
 							<form action="{{ Route('booking_list_action_task') }}" target="_blank">
 								<input type="hidden" name="bid" value="{{$value->booking_order_id}}">
