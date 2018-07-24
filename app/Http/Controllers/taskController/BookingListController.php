@@ -16,6 +16,7 @@ class BookingListController extends Controller
     public function bookingListView(){
 
         $bookingList = DB::table('mxp_bookingBuyer_details')
+            ->where('is_complete', 0)
             ->groupBy('booking_order_id')
             ->orderBy('id','DESC')
             ->paginate(15);
