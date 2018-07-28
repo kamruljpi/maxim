@@ -124,14 +124,7 @@
                                 </div>
                             </div>
 
-                            <div class="ipo_increase form-group hidden">
-                                <label class="col-md-4 control-label">
-                                    <span class="pull-right">IPO Increase Percentage</span>
-                                </label>
-                                <div class="col-md-6">
-                                    <input type="text" name="ipoIncrease" class="form-control" disabled="true" id="ipoIncrease" placeholder="Increase Value Percentage">
-                                </div>
-                            </div>
+
                             <?php } ?>
                             <div class="form-group">
                                 <div class="col-md-4"></div>

@@ -1,66 +1,11 @@
-@extends('maxim.layouts.layouts')
-@section('title','IPO Maxim')
-@section('print-body')
+@extends('layouts.dashboard')
+{{-- @section('page_heading',trans('others.task_label')) --}}
+@section('page_heading','')
+@section('section')
 
-	<center>
-		<a href="#" onclick="myFunction()" class="print">Print & Preview</a>
-	</center>
-
-
-	@foreach($buyerDetails as $details)
-		<div class="row header-top-a">
-			<div class="col-md-2 col-sm-2">
-				
-			</div>
-			<div class="col-md-8 col-sm-8 buyerName">
-				<h2 align="center">{{$details->buyer_name}}</h2>
-			</div>
-			<div class="col-md-2 col-sm-2"></div>
-		</div>
-	@endforeach
-	<div class="row header-bottom">
-		<div class="col-md-12 col-sm-12 header-bottom-b">
-			<span>Internal Purchase Order</span>
-		</div>
-		<hr>
-	</div>
-
-	<div class="row body-top">
-		<div class="col-md-6 col-sm-6 col-xs-7 body-list">
-			@foreach($buyerDetails as $details)
-				<ul>
-					<li><strong>Booking ID: {{$details->booking_order_id}}</strong></li>
-					<li><strong>Company Name: {{$details->buyer_name}}</strong></li>
-					<li><h5>Date : {{Carbon\Carbon::now()->format('Y-m-d')}}</h5></li>
-				</ul>
-			@endforeach
-		</div>
-		
-		<div class="col-md-6 col-sm-6 col-xs-5 valueGenarate">
-			@php ($i=0)
-			@foreach ($sentBillId as $billdata)
-				@for($i;$i <= 0;$i++)
-				<table class="tables table-bordered">
-					<tr>
-						<td colspan="2">
-							<div>
-								<p>MAY PORTION</p>
-							</div>
-						</td>
-					</tr>
-					<tr>
-						<td colspan="2">
-							<div>
-								<p>Booking No : {{$billdata->ipo_id}}</p>
-							</div>
-						</td>
-					</tr>
-				</table>
-			@endfor
-			@endforeach
-			
-		</div>
-	</div>
+<?php $increase = $initIncrease; ?>
+<form action="{{ Route('task_action') }}" method="POST">
+	<input type="hidden" name="_token" value="{{ csrf_token() }}">
 <table class="table table-bordered mainBody">
     <thead>
     	<tr>
@@ -70,7 +15,7 @@
         	<th width="15%">Description</th>
         	<th width="10%">Size</th>
         	<th width="10%">TOTAL PCS/MTR</th>
-        	<th width="10%">{{$increase}}%</th>
+        	<th width="10%">Initial Incrise(%)</th>
         	<th width="10%">1ST DELIVERY</th>
             <th width="10%">Request Date</th>
             <th width="10%">Confirmation Date</th>
@@ -92,17 +37,19 @@
     	 		 ?>
     	 	@endforeach
 
+			<?php
+            	$ipoIdInc = 0;
+			?>
     		@foreach ($sentBillId as $key => $item)
 
     			<?php
     				$i = 0;
     				$k = 0;
+
     				$totalQty =0;
     				$totalIncrQty = 0;
     				$itemsize = explode(',', $item->item_size);  				
     				$qty = explode(',', $item->item_quantity);
-                    $itemQuaInc = explode(',', $item->initial_increase);
-
     				$itemlength = 0;
     				foreach ($itemsize as $itemlengths) {
     					$itemlength = sizeof($itemlengths);
@@ -133,7 +80,7 @@
 				    					@if( $i > 1 )
 				    					<tr>
 				    						<td></td>
-				    						<td width="100%">{{$totalQty}}</td>
+				    						<td width="100%">{{$i}}{{$totalQty}}</td>
 				    					</tr>
 				    					@endif
 				    				</table>
@@ -142,18 +89,32 @@
 				    			<div class="middel-table">
 				    				<table>
 				    					@foreach ($itemQtyValue as $size => $Qty)
-				    					<?php 
-				    						$k++;
-				    						$totalIncrQty += ceil(($Qty*$itemQuaInc[$k-1])/100 + $Qty);
-				    					?>
-				    					<tr>
-							    			<td style="padding:5px;" width="100%">{{ceil(($Qty*$itemQuaInc[$k-1])/100 + $Qty)}} ({{ $itemQuaInc[$k-1] }}%)</td>
-				    					</tr>
+											<?php
+												$k++;
+												$totalIncrQty += ceil(($Qty*$increase)/100 + $Qty);
+											?>
+
+											<tr>
+
+												<input type="hidden" name="taskType" value="IPO">
+												<input type="hidden" name="ipo_increase" value="YES">
+
+												<?php
+
+												?>
+
+												<input type="hidden" name="ipo_id[]" value="{{$ipoIds[$ipoIdInc]}}" >
+												<td width="100%">
+													<input type="text" name="ipo_increase_percentage[]" value="" placeholder="Percentage">
+												</td>
+
+											</tr>
 				    					@endforeach
+										<?php $ipoIdInc = $ipoIdInc+1; ?>
 
 				    					@if( $k > 1 )
 				    					<tr>
-				    						<td width="100%">{{$totalIncrQty}}</td>
+{{--				    						<td width="100%">{{$totalIncrQty}}</td>--}}
 				    					</tr>
 				    					@endif
 				    				</table>
@@ -172,45 +133,20 @@
 	    			</tr>
     		@endforeach
     	
-    	<tr>
-			<td colspan="5">
-				<div class="grandTotal" style="">
-					<span>GRAND TOTAL</span>
-				</div>
-			</td>
-			<td>{{$totalAllQty}}</td>
-			<td>{{$totalAllIncrQty}}</td>
-			<td></td>
-			<td></td>
-			<td></td>
-		</tr>
-		<tr>
-			<td colspan="10">
-				<p><strong>Remarks: TAKE GOODS FROM STOCK WITH {{$increase}}%</strong></p>
-			</td>
+    	  <tr>
 		</tr>
 
-		<tr>
-			<td colspan="10">
-				<h6>1. Quality confirm to sample card</h6>
-			</td>
-		</tr>
-
-		 <tr>
-		 	<td colspan="10">
-		 		<h6>2. Please pack as the enclosed background and mark the styleNo. on the parcel or carton.</h6>
-		 	</td>
-		 </tr>
-    		
-    	<tr>
-			<td colspan="3"><strong>PrintShop: </strong></td>
-			<td colspan="2"><strong>QC: </strong></td>
-			<td colspan="2"><strong>CS Superviser: </strong></td>
-			<td colspan="3"><strong>CS: </strong></td>
-		</tr>
 	</tbody>
 </table>
-
+	<div class="form-group">
+		<div class="col-md-4"></div>
+		<div class="col-md-4">
+			<button type="submit" class="btn btn-primary form-control" style="margin-right: 15px;">Save
+			</button>
+		</div>
+		<div class="col-md-5"></div>
+	</div>
+</form>
 <script type="text/javascript">
 	function myFunction() {
 		$('.colspan-td table').css('font-family','arial, sans-serif');
@@ -225,4 +161,4 @@
 	    window.print();
 	}
 </script>
-@endsection
+@stop

@@ -64,7 +64,7 @@ class TaskController extends Controller
 
          	return view('maxim.orderInput.orderInputIndex',compact('buyerDetails'))->with(['taskType' => $taskType]);
 
-         }elseif($taskType === 'PI'){
+        }elseif($taskType === 'PI'){
 
             $formatTypes = $request->piFormat;
             $companyInfo = DB::table('mxp_header')->where('header_type',11)->get();
@@ -79,66 +79,114 @@ class TaskController extends Controller
 
             return view('maxim.pi_format.piReportPage',compact('companyInfo','bookingDetails','footerData','formatTypes'));
 
-         }elseif($taskType === 'IPO'){
-            $roleManage = new RoleManagement();
-            $ipoIncrease = $request->ipoIncrease;
+        }elseif($taskType === 'IPO'){
 
-            $validMessages = [
-                'bookingId.required' => 'Booking Id is required.',
-                'ipoIncrease.required' => 'Increase Value is required.'
+     	    if(isset($_POST['ipo_increase']) && $_POST['ipo_increase'] == 'YES'){
+                $i=0;
+                $ipoId = 0;
+
+                foreach ( $request->ipo_increase_percentage as $ipo_inc) {
+
+                    if(isset($request->ipo_id[$i]) && $ipoId != $request->ipo_id[$i]){
+                        $ipoId = $request->ipo_id[$i];
+
+                        $itemUpdate = MxpIpo::find($ipoId);
+                        $itemUpdate->initial_increase = $ipo_inc;
+                        $itemUpdate->save();
+                    }else{
+                        $ipoId = $ipoId;
+
+                        $itemUpdate = MxpIpo::find($ipoId);
+                        $itemUpdate->initial_increase = $itemUpdate->initial_increase.','.$ipo_inc;
+                        $itemUpdate->save();
+                    }
+
+                    $IpoUniqueID = $itemUpdate->ipo_id;
+                    $bookingOrderId = $itemUpdate->booking_order_id;
+                    $i++;
+     	        }
+
+     	        $ipoDetails = DB::table("mxp_ipo")->where('ipo_id',$IpoUniqueID)->get();
+                $buyerDetails = DB::table("mxp_bookingBuyer_details")->where('booking_order_id',$bookingOrderId )->get();
+                $headerValue = DB::table("mxp_header")->where('header_type',11)->get();
+
+
+                return view('maxim.ipo.ipoBillPage',[
+                    'headerValue' => $headerValue,
+                    'initIncrease' => $request->ipoIncrease,
+                    'buyerDetails' => $buyerDetails,
+                    'sentBillId' => $ipoDetails
+                ]);
+
+
+            }else{
+
+                $validMessages = [
+                    'bookingId.required' => 'Booking Id is required.'
                 ];
-            $datas = $request->all();
-            $validator = Validator::make($datas, 
-                  [
-                    'bookingId' => 'required',
-                    'ipoIncrease' => 'required'
-                ],$validMessages);            
+                $datas = $request->all();
+                $validator = Validator::make($datas,
+                    [
+                        'bookingId' => 'required'
+                    ],$validMessages);
 
-            if ($validator->fails()) {
-              return redirect()->back()->withInput($request->input())->withErrors($validator->messages());
+                if ($validator->fails()) {
+                    return redirect()->back()->withInput($request->input())->withErrors($validator->messages());
+                }
+                $validationError = $validator->messages();
+                $IpoUniqueID = "RGA".Carbon::now()->format('dmY')."-ACL-02-".mt_rand(10000,99999);
+
+                $bookingDetails = DB::select("select user_id,booking_order_id,erp_code,item_code,item_description,GROUP_CONCAT(item_size) as item_size,GROUP_CONCAT(item_quantity) as item_quantity,item_price,matarial,gmts_color,others_color,orderDate,orderNo,shipmentDate,poCatNo,created_at,updated_at from mxp_booking where booking_order_id= '".$request->bookingId."' GROUP BY item_code");
+
+                if (empty($bookingDetails)) {
+                    return \Redirect()->Route('dashboard_view');
+                }
+                $lastIpoIds = [];
+                foreach ($bookingDetails as $details) {
+                    $createIpo = new MxpIpo();
+                    $createIpo->user_id = Auth::user()->user_id;
+                    $createIpo->ipo_id = $IpoUniqueID;
+//                $createIpo->initial_increase = $ipoIncrease;
+                    $createIpo->booking_order_id = $details->booking_order_id;
+                    $createIpo->erp_code = $details->erp_code;
+                    $createIpo->item_code = $details->item_code;
+                    $createIpo->item_description = $details->item_description;
+                    $createIpo->item_size = $details->item_size;
+                    $createIpo->item_quantity = $details->item_quantity;
+                    $createIpo->item_price = $details->item_price;
+                    $createIpo->matarial = $details->matarial;
+                    $createIpo->gmts_color = $details->gmts_color;
+                    $createIpo->others_color = $details->others_color;
+                    $createIpo->orderDate = $details->orderDate;
+                    $createIpo->orderNo = $details->orderNo;
+                    $createIpo->shipmentDate = $details->shipmentDate;
+                    $createIpo->poCatNo = $details->poCatNo;
+                    $createIpo->status = self::CREATE_IPO;
+                    $createIpo->save();
+
+                    array_push($lastIpoIds, $createIpo->id);
+
+
+                }
+
+                $ipoDetails = DB::table("mxp_ipo")->where('ipo_id',$IpoUniqueID)->get();
+                $buyerDetails = DB::table("mxp_bookingBuyer_details")->where('booking_order_id',$request->bookingId)->get();
+                $headerValue = DB::table("mxp_header")->where('header_type',11)->get();
+                return view('maxim.ipo.ipo_price_manage',[
+                    'headerValue' => $headerValue,
+                    'buyerDetails' => $buyerDetails,
+                    'sentBillId' => $ipoDetails,
+                    'ipoIds' => $lastIpoIds
+                ]);
             }
-            $validationError = $validator->messages();
-            $IpoUniqueID = "RGA".Carbon::now()->format('dmY')."-ACL-02-".mt_rand(10000,99999);
 
-            $bookingDetails = DB::select("select user_id,booking_order_id,erp_code,item_code,item_description,GROUP_CONCAT(item_size) as item_size,GROUP_CONCAT(item_quantity) as item_quantity,item_price,matarial,gmts_color,others_color,orderDate,orderNo,shipmentDate,poCatNo,created_at,updated_at from mxp_booking where booking_order_id= '".$request->bookingId."' GROUP BY item_code");
+            return 0;
 
 
-            if (empty($bookingDetails)) {
-              return \Redirect()->Route('dashboard_view');
-            }
-            foreach ($bookingDetails as $details) {
-                $createIpo = new MxpIpo();
-                $createIpo->user_id = Auth::user()->user_id;
-                $createIpo->ipo_id = $IpoUniqueID;
-                $createIpo->initial_increase = $ipoIncrease;
-                $createIpo->booking_order_id = $details->booking_order_id;
-                $createIpo->erp_code = $details->erp_code;
-                $createIpo->item_code = $details->item_code;
-                $createIpo->item_description = $details->item_description;
-                $createIpo->item_size = $details->item_size;
-                $createIpo->item_quantity = $details->item_quantity;
-                $createIpo->item_price = $details->item_price;
-                $createIpo->matarial = $details->matarial;
-                $createIpo->gmts_color = $details->gmts_color;
-                $createIpo->others_color = $details->others_color;
-                $createIpo->orderDate = $details->orderDate;
-                $createIpo->orderNo = $details->orderNo;
-                $createIpo->shipmentDate = $details->shipmentDate;
-                $createIpo->poCatNo = $details->poCatNo;
-                $createIpo->status = self::CREATE_IPO;
-                $createIpo->save();
-            }
-            $ipoDetails = DB::table("mxp_ipo")->where('ipo_id',$IpoUniqueID)->get();
-            $buyerDetails = DB::table("mxp_bookingBuyer_details")->where('booking_order_id',$request->bookingId)->get();
-            $headerValue = DB::table("mxp_header")->where('header_type',11)->get();
-            return view('maxim.ipo.ipoBillPage',[
-                'headerValue' => $headerValue,
-                'initIncrease' => $request->ipoIncrease,
-                'buyerDetails' => $buyerDetails,
-                'sentBillId' => $ipoDetails
-            ]);
 
-         }elseif($taskType === 'MRF'){
+
+
+        }elseif($taskType === 'MRF'){
             $data = $request->all();
 
             $suppliers = Supplier::where('status', 1)
